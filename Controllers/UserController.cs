@@ -31,5 +31,22 @@ namespace taskTeamManagementSystem.Controllers
             return Ok(users);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CreateUser([FromBody] User user)
+        {
+            if (user == null)
+                return BadRequest("User cannot be null");
+
+            var existingUser = await _context.Users.SingleOrDefaultAsync(u => u.Email == user.Email);
+            if (existingUser != null)
+                return Conflict("User with this email already exists");
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, user.PasswordHash);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetUsers), new { id = user.Id }, user);
+        }
+
     }
 }
